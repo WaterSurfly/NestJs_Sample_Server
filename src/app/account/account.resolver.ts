@@ -1,8 +1,7 @@
-import { CACHE_MANAGER, Inject } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AccountService } from './account.service';
-import { AccountEntity } from '../../database/dbAuth/entity/account.entity';
-import { CreateAccountInput } from './input/create-account-input';
+import { AccountInput } from './input/account-input';
+import { GetAccountInfoOutput, GetAllAccountInfosOutput } from "./output/account-output";
 
 @Resolver('account')
 export class AccountResolver {
@@ -20,21 +19,25 @@ export class AccountResolver {
         return this.accountService.hello2();
     }
 
-    @Query(() => AccountEntity)
+    @Query( () => GetAccountInfoOutput)
     async login(@Args('loginId', { type: () => String }) loginId: string) {
         return this.accountService.login(loginId);
     }
 
-    @Query(() => AccountEntity)
+    @Query(() => GetAccountInfoOutput)
     async getAccountInfo(
         @Args('loginId', { type: () => String }) loginId: string,
     ) {
         return this.accountService.getAccountInfo(loginId);
     }
 
+    @Query(() => GetAllAccountInfosOutput)
+    async getAllAccountInfo() {
+        return this.accountService.getAllAccountInfo();
+    }
 
-    @Mutation(() => AccountEntity)
-    async createAccount(@Args('createAccountInput') createAccountInput: CreateAccountInput) {
+    @Mutation( () => GetAccountInfoOutput)
+    async createAccount(@Args('createAccountInput') createAccountInput: AccountInput) {
         return await this.accountService.createAccount(createAccountInput);
     }
 }

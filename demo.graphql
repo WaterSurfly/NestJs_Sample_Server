@@ -1,3 +1,13 @@
+type AccountsOutput {
+    resultType: Int
+    infos : [AccountEntity]
+}
+
+type AccountOutput {
+    resultType: Int
+    info : AccountEntity
+}
+
 type AccountEntity {
     loginId: String!
     createdTime: String
@@ -8,8 +18,9 @@ type Query {
     hello: String!
     hello2: String!
     getCache: String!
-    login(loginId: String!): AccountEntity
-    getAccountInfo(loginId: String!): AccountEntity
+    login(loginId: String!): AccountOutput
+    getAccountInfo(loginId: String!): AccountOutput
+    getAllAccountInfo: AccountsOutput
 }
 
 input CreateAccountInput {
@@ -17,7 +28,7 @@ input CreateAccountInput {
 }
 
 type Mutation {
-    createAccount(createAccountInput: CreateAccountInput): AccountEntity
+    createAccount(createAccountInput: CreateAccountInput): AccountOutput
 }
 
 

@@ -8,9 +8,9 @@ import {
 import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
 import { map, Observable, tap } from 'rxjs';
 
-export interface Response<T> {
-    result: T;
-}
+//export interface Response<T> {
+//    result: T;
+//}
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -52,6 +52,11 @@ export class LoggingInterceptor implements NestInterceptor {
             return next
                 .handle()
                 .pipe(
+                    map((data) => {
+                        data['key'] = key;
+                        data['typename'] = typename;
+                        return data;
+                    }),
                     tap((data) =>
                         this.logger.log(
                             `Response GraphQL from ${typename} : ${key} \n response: ${JSON.stringify(

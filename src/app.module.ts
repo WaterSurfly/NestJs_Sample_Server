@@ -25,6 +25,8 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { ChatModule } from './app/chat/chat.module';
+import {response} from "express";
+import {GraphQLError, GraphQLFormattedError} from "graphql";
 
 const loadConfigs = [emailConfig, authConfig, globalConfig];
 

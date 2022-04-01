@@ -12,7 +12,11 @@ import compression from 'compression';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { RedisIoAdapter } from './app/chat/redis.adapter';
-import helmet from 'helmet';
+import helmet, {contentSecurityPolicy} from 'helmet';
+import csurf from 'csurf';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc'
+dayjs.extend(utc);
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -25,7 +29,8 @@ async function bootstrap() {
                             : 'silly',
                     format: winston.format.combine(
                         winston.format.timestamp({
-                            format: 'YYYY-MM-DD HH:mm:ss',
+                            format: () =>
+                                `${dayjs().format('YYYY-MM-DD HH:mm:ss')} / ${dayjs().utc().format('(UTC) YYYY-MM-DD HH:mm:ss')}`
                         }),
                         nestWinstonModuleUtilities.format.nestLike('Sample', {
                             prettyPrint: true,
@@ -43,7 +48,8 @@ async function bootstrap() {
     );
     app.use(GlobalLoggerMiddleware);
     app.use(compression());
-    app.use(helmet());
+    //app.use(helmet());
+    //app.use(csurf());
     app.useWebSocketAdapter(new RedisIoAdapter(app));
     app.useStaticAssets(join(__dirname, '..', 'static'));
     app.enableCors();

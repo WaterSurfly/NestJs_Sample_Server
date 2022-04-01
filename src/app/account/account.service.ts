@@ -1,5 +1,4 @@
 import {
-    CACHE_MANAGER,
     Inject,
     Injectable,
     InternalServerErrorException,
@@ -7,13 +6,15 @@ import {
     LoggerService,
     UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
-import { dbAuthConnectionName } from '../../database/database.constants';
-import { AccountRepository } from '../../database/dbAuth/repository/account.repository';
-import { AccountEntity } from 'src/database/dbAuth/entity/account.entity';
-import { CreateAccountInput } from './input/create-account-input';
-import { TimeHelper } from '../../utils/time-helper';
+import {InjectConnection} from '@nestjs/typeorm';
+import {Connection} from 'typeorm';
+import {dbAuthConnectionName} from '../../database/database.constants';
+import {AccountRepository} from '../../database/dbAuth/repository/account.repository';
+import {AccountEntity} from 'src/database/dbAuth/entity/account.entity';
+import {AccountInput} from './input/account-input';
+import {TimeHelper} from '../../utils/time-helper';
+import {GetAccountInfoOutput, GetAllAccountInfosOutput} from "./output/account-output";
+import {ResultType} from "../../common/base/base-result.type";
 
 @Injectable()
 export class AccountService {
@@ -83,31 +84,47 @@ export class AccountService {
         return await this.getAccountInfo(loginId);
     }
 
-    async createAccount(account: CreateAccountInput): Promise<AccountEntity> {
+    async createAccount(account: AccountInput) {
         const isExist = await this.checkAccountExists(account.loginId);
         if (isExist) {
+            const rs = new GetAccountInfoOutput();
+            rs.resultType = ResultType.Fail;
+            return rs;
+            /*
             throw new InternalServerErrorException(
                 '이미 동일한 이름의 계정이 존재합니다.',
             );
+            */
         }
 
         // 계정생성
         const rs = await this.saveAccountUsingQueryRunner(account.loginId);
         if (!rs) {
+            const rs = new GetAccountInfoOutput();
+            rs.resultType = ResultType.Fail;
+            return rs;
+            /*
             throw new UnprocessableEntityException(
                 '계정 생성에 실패하였습니다.',
             );
+             */
         }
 
         return await this.getAccountInfo(account.loginId);
     }
 
-    async getAccountInfo(loginId: string): Promise<AccountEntity> {
+    async getAccountInfo(loginId: string) {
         const account = await this.accountRepository.findOne({
             loginId,
         });
 
-        return account;
+        const rs = new GetAccountInfoOutput();
+        rs.resultType = ResultType.Success;
+        rs.info = account;
+
+        return rs;
+
+        //return account;
     }
 
     private async updateLastLoginTime(loginId) {
@@ -117,5 +134,17 @@ export class AccountService {
 
         account.lastLoginTime = TimeHelper.getUtcTime();
         await this.accountRepository.save(account);
+    }
+
+    async getAllAccountInfo() {
+        const accounts = await this.accountRepository.find();
+
+        const rs = new GetAllAccountInfosOutput()
+        rs.resultType = ResultType.Success;
+        rs.infos = accounts;
+
+        return rs;
+
+        //return account;
     }
 }
