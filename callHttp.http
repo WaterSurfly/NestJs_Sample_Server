@@ -1,0 +1,47 @@
+###
+GET http://127.0.0.1:3000/
+
+###
+GET http://127.0.0.1:3000/hello
+
+###
+POST http://127.0.0.1:3000/users
+Content-Type: application/json
+
+{"name": "junho.seok", "email": "junho.seok@gameberry.co.kr", "password": "test1234" }
+
+###
+POST http://127.0.0.1:3000/users2
+Content-Type: application/json
+
+{"name": "junho.seok", "email": "junho.seok@gameberry.co.kr", "password": "test1234" }
+
+
+###
+GET http://127.0.0.1:3000/batch
+
+
+###
+POST http://127.0.0.1:3000/batch/start-sample
+
+
+###
+POST http://127.0.0.1:3000/batch/stop-sample
+
+
+###
+GET http://127.0.0.1:3000/health-check
+
+
+
+### 계정 컨트롤러 액세스
+GET http://127.0.0.1:3000/account
+
+### Redis Cache 테스트
+GET http://127.0.0.1:3000/account/cache
+
+### 계정 생성
+POST http://127.0.0.1:3000/account/login
+Content-Type: application/json
+
+{"LoginId": "junho" }
