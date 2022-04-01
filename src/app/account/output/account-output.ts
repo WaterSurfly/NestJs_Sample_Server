@@ -9,10 +9,10 @@ export class AccountInfoDto {
     loginId: string;
 
     @IsString()
-    createdTime: string;
+    createdTime: Date;
 
     @IsString()
-    lastLoginTime: string;
+    lastLoginTime: Date;
 }
 
 // Response Output : get one account

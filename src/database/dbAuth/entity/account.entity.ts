@@ -1,24 +1,20 @@
-import { Field, ObjectType } from '@nestjs/graphql';
 import {
     Entity,
     PrimaryColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
     Column,
+    BaseEntity,
 } from 'typeorm';
+import { DateTimeTransformer } from "../../../utils/time-helper";
 
-@ObjectType()
 @Entity('Account')
-export class AccountEntity {
-    @Field(() => String)
+export class AccountEntity extends BaseEntity{
     @PrimaryColumn()
     loginId: string;
 
-    @Field(() => Date)
-    @Column()
-    createdTime: string;
+    @Column({ type: 'datetime', transformer: new DateTimeTransformer() })
+    createdTime: Date;
 
-    @Field(() => Date)
-    @Column()
-    lastLoginTime: string;
+    @Column({ type: 'datetime', transformer: new DateTimeTransformer() })
+    lastLoginTime: Date;
 }
+

@@ -51,7 +51,7 @@ export class AccountService {
         await queryRunner.startTransaction();
 
         try {
-            const now = TimeHelper.getUtcTime();
+            const now = TimeHelper.getUtcDate();
             const account = new AccountEntity();
             account.loginId = loginId;
             account.createdTime = now;
@@ -132,7 +132,7 @@ export class AccountService {
             loginId,
         });
 
-        account.lastLoginTime = TimeHelper.getUtcTime();
+        account.lastLoginTime = TimeHelper.getUtcDate();
         await this.accountRepository.save(account);
     }
 
