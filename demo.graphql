@@ -1,0 +1,23 @@
+type AccountEntity {
+    loginId: String!
+    createdTime: String
+    lastLoginTime: String
+}
+
+type Query {
+    hello: String!
+    hello2: String!
+    getCache: String!
+    login(loginId: String!): AccountEntity
+    getAccountInfo(loginId: String!): AccountEntity
+}
+
+input CreateAccountInput {
+    loginId: String!
+}
+
+type Mutation {
+    createAccount(createAccountInput: CreateAccountInput): AccountEntity
+}
+
+
