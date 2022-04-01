@@ -29,7 +29,7 @@
 ## Installation
 
 ```bash
-$ npm install
+$ npm install --save
 ```
 
 ## Running the app
@@ -43,6 +43,62 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+```
+
+## Chat
+```bash
+http://127.0.0.1:3000/chat
+```
+
+## GraphQL
+```bash
+http://127.0.0.1:3000/graphql
+
+# mutation
+mutation {
+  createAccount(
+    createAccountInput : {
+      loginId: "name"
+    }
+  )
+  {
+    resultType
+    info {
+      loginId
+      createdTime
+      lastLoginTime
+    }
+  }
+}
+
+# query
+query {
+  getAccountInfo(loginId: "name") {
+    resultType
+    info {
+      loginId
+      createdTime
+      lastLoginTime
+    }
+  }
+
+  
+  login(loginId: "name") {
+    resultType
+    info {
+          loginId
+    }
+  }
+  
+  getAllAccountInfo {
+    resultType
+    infos {
+      loginId
+      createdTime
+      lastLoginTime
+    }
+  }
+}
 ```
 
 ## Test
