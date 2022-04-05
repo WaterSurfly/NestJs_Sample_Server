@@ -31,15 +31,15 @@ export class AccountResolver {
     // ex) { "Authorization":"Bearer :tokenString "}
     @UseGuards(AuthGuard) // jwt verify
     @Query( () => GetAccountInfoOutput)
-    async login(@Args('loginId', { type: () => String }) loginId: string) {
-        return this.accountService.login(loginId);
+    async login(@Args('accountId', { type: () => Number }) accountId: number) {
+        return this.accountService.login(accountId);
     }
 
     @Query(() => GetAccountInfoOutput)
     async getAccountInfo(
-        @Args('loginId', { type: () => String }) loginId: string,
+        @Args('accountId', { type: () => Number }) accountId: number,
     ) {
-        return this.accountService.getAccountInfo(loginId);
+        return this.accountService.getAccountInfo(accountId);
     }
 
     @Query(() => GetAllAccountInfosOutput)

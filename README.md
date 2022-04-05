@@ -50,50 +50,50 @@ mutation {
 
 # query sample
 query {
-  	auth(id: "name") {
-		resultType
-		info {
-	  		accountId
-	  		loginId
-	  		createdTime
-	  		lastLoginTime
-		}
-		token
+    auth(id: "name") {
+        resultType
+        info {
+            accountId
+            loginId
+            createdTime
+            lastLoginTime
+        }
+        token
     }
 }
 
   
 query {
-    login(loginId: "name") {
+    login(accountId: number) {
     resultType
-  	info {
-	  accountId
-	  loginId
-	  createdTime
-	  lastLoginTime
-  	}
-  }
+    info {
+        accountId
+        loginId
+        createdTime
+        lastLoginTime
+      }
+    }
 }
   
 query {
-    getAccountInfo(loginId: "name") {
+    getAccountInfo(accountId: number) {
     resultType
-  	info {
-		loginId
-		createdTime
-		lastLoginTime
+    info {
+        loginId
+        createdTime
+        lastLoginTime
+      }
     }
-  }
 }
 
 query { 
     getAllAccountInfo {
-    	resultType
-		infos {
-	  		loginId
-	  		createdTime
-	  		lastLoginTime
-		}
+        resultType
+        infos {
+            loginId
+            createdTime
+            lastLoginTime
+        }
     }
 }
 

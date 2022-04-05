@@ -68,13 +68,13 @@ export class AuthService {
                 ) &
                 User4Guest;
 
-            const { id, reqTime } = payload;
+            const { id, accountId, reqTime } = payload;
 
             if(!info) {
                 throw new UnauthorizedException();
             }
 
-            if(info.loginId !== id) {
+            if(info.accountId !== Number(accountId)) {
                 throw new UnauthorizedException();
             }
 

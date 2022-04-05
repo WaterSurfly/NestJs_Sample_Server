@@ -26,8 +26,8 @@ type Query {
     hello2: String!
     getCache: String!
     auth(id: String!): AuthOutput
-    login(loginId: String!): AccountOutput
-    getAccountInfo(loginId: String!): AccountOutput
+    login(accountId: Int!): AccountOutput
+    getAccountInfo(accountId: Int!): AccountOutput
     getAllAccountInfo: AccountsOutput
 }
 

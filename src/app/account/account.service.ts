@@ -17,19 +17,18 @@ import {AuthOutput, GetAccountInfoOutput, GetAllAccountInfosOutput} from "./outp
 import {ResultType} from "../../common/base/base-result.type";
 import {AuthService} from "../../common/auth/auth.service";
 
-
 @Injectable()
 export class AccountService {
     private accountRepository: AccountRepository;
 
     constructor(
         @InjectConnection(dbAuthConnectionName)
-        private connection: Connection,
+        private authConn: Connection,
         private authService: AuthService,
         @Inject(Logger) private readonly logger: LoggerService,
     ) {
         this.accountRepository =
-            this.connection.getCustomRepository(AccountRepository);
+            this.authConn.getCustomRepository(AccountRepository);
     }
 
     hello(): string {
@@ -40,45 +39,9 @@ export class AccountService {
         return 'GET Account!!! Hello2';
     }
 
-    async checkAccountExists(loginId: string): Promise<boolean> {
-        const account = await this.accountRepository.findOne({
-            loginId,
-        });
-        return !!account;
-    }
-
-    async saveAccountUsingQueryRunner(loginId: string): Promise<boolean> {
-        const queryRunner = this.connection.createQueryRunner();
-
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-
-        try {
-            const now = TimeHelper.getUtcDate();
-            const account = new AccountEntity();
-            account.loginId = loginId;
-            account.createdTime = now;
-            account.lastLoginTime = now;
-
-            await queryRunner.manager.save(account);
-
-            //throw new InternalServerErrorException(); // 일부러 에러를 발생시켜 본다
-
-            await queryRunner.commitTransaction();
-
-            return true;
-        } catch (e) {
-            this.logger.error(e);
-            await queryRunner.rollbackTransaction();
-            return false;
-        } finally {
-            await queryRunner.release();
-        }
-    }
-
     async auth(id: string): Promise<any> {
         let rs;
-        const isExist = await this.checkAccountExists(id);
+        const isExist = await this.checkAccountExist(id);
         if (isExist) { // 계정 존재
             rs = await this.getAccountInfo(id);
 
@@ -101,8 +64,8 @@ export class AccountService {
         return authRs;
     }
 
-    async login(loginId: string): Promise<object> {
-        const isExist = await this.checkAccountExists(loginId);
+    async login(accountId: number): Promise<any> {
+        const isExist = await this.checkAccountExist(accountId);
 
         if (!isExist) {
             const rs = new GetAccountInfoOutput();
@@ -110,22 +73,16 @@ export class AccountService {
             return rs;
         }
 
-        await this.updateLastLoginTime(loginId);
-        return await this.getAccountInfo(loginId);
-
+        await this.updateLastLoginTime(accountId);
+        return await this.getAccountInfo(accountId);
     }
 
     async createAccount(account: AccountInput) {
-        const isExist = await this.checkAccountExists(account.loginId);
+        const isExist = await this.checkAccountExist(account.loginId);
         if (isExist) {
             const rs = new GetAccountInfoOutput();
             rs.resultType = ResultType.Fail;
             return rs;
-            /*
-            throw new InternalServerErrorException(
-                '이미 동일한 이름의 계정이 존재합니다.',
-            );
-            */
         }
 
         // 계정생성
@@ -134,33 +91,72 @@ export class AccountService {
             const rs = new GetAccountInfoOutput();
             rs.resultType = ResultType.Fail;
             return rs;
-            /*
-            throw new UnprocessableEntityException(
-                '계정 생성에 실패하였습니다.',
-            );
-             */
         }
 
         return await this.getAccountInfo(account.loginId);
     }
 
-    async getAccountInfo(loginId: string) {
-        const account = await this.accountRepository.findOne({
-            loginId,
-        });
+    async checkAccountExist(value: any) {
+        let condition;
+        const type = typeof value;
+        if(type === 'number') {
+            condition = { accountId: value };
+        } else {
+            condition = { loginId: value }
+        }
+        const account = await this.accountRepository.findOne(condition);
+        return !!account;
+    }
+
+    async saveAccountUsingQueryRunner(loginId: string): Promise<boolean> {
+        const queryRunner = this.authConn.createQueryRunner();
+
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        try {
+            const now = TimeHelper.getUtcDate();
+            const account = new AccountEntity();
+            account.loginId = loginId;
+            account.createdTime = now;
+            account.lastLoginTime = now;
+
+            await queryRunner.manager.save(account);
+
+            //throw new InternalServerErrorException(); // forced error
+
+            await queryRunner.commitTransaction();
+
+            return true;
+        } catch (e) {
+            this.logger.error(e);
+            await queryRunner.rollbackTransaction();
+            return false;
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getAccountInfo(value: any) {
+        let condition;
+        const type = typeof value;
+        if(type === 'number') {
+            condition = { accountId: value };
+        } else {
+            condition = { loginId: value }
+        }
+        const account = await this.accountRepository.findOne(condition);
 
         const rs = new GetAccountInfoOutput();
         rs.resultType = ResultType.Success;
         rs.info = account;
 
         return rs;
-
-        //return account;
     }
 
-    private async updateLastLoginTime(loginId) {
+    private async updateLastLoginTime(accountId) {
         const account = await this.accountRepository.findOne({
-            loginId,
+            accountId,
         });
 
         account.lastLoginTime = TimeHelper.getUtcDate();
@@ -175,7 +171,13 @@ export class AccountService {
         rs.infos = accounts;
 
         return rs;
+    }
 
-        //return account;
+    async getPlayerInfo() {
+
+    }
+
+    async createPlayer() {
+
     }
 }

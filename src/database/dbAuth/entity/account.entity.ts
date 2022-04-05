@@ -3,6 +3,7 @@ import {
     PrimaryColumn,
     Column,
     BaseEntity,
+    Index,
 } from 'typeorm';
 import { DateTimeTransformer } from "../../../utils/time-helper";
 
@@ -11,6 +12,7 @@ export class AccountEntity extends BaseEntity{
     @PrimaryColumn()
     accountId: Number;
 
+    @Index({ unique: true })
     @Column()
     loginId: string;
 

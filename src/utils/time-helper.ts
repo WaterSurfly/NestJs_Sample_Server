@@ -27,7 +27,7 @@ export class TimeHelper {
 
     static getUtcTimeTransformFrom(time) {
         dayjs.extend(utc);
-        return dayjs(time).utc().format(this.dateTemplate);
+        return dayjs(time).format(this.dateTemplate);
     }
 }
 
