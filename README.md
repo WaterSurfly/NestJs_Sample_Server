@@ -31,7 +31,7 @@ http://127.0.0.1:3000/chat
 ```bash
 http://127.0.0.1:3000/graphql
 
-# mutation
+# mutation sample
 mutation {
   createAccount(
     createAccountInput : {
@@ -48,34 +48,55 @@ mutation {
   }
 }
 
-# query
+# query sample
 query {
-  getAccountInfo(loginId: "name") {
-    resultType
-    info {
-      loginId
-      createdTime
-      lastLoginTime
+  	auth(id: "name") {
+		resultType
+		info {
+	  		accountId
+	  		loginId
+	  		createdTime
+	  		lastLoginTime
+		}
+		token
     }
-  }
+}
 
   
-  login(loginId: "name") {
+query {
+    login(loginId: "name") {
     resultType
-    info {
-          loginId
-    }
+  	info {
+	  accountId
+	  loginId
+	  createdTime
+	  lastLoginTime
+  	}
   }
+}
   
-  getAllAccountInfo {
+query {
+    getAccountInfo(loginId: "name") {
     resultType
-    infos {
-      loginId
-      createdTime
-      lastLoginTime
+  	info {
+		loginId
+		createdTime
+		lastLoginTime
     }
   }
 }
+
+query { 
+    getAllAccountInfo {
+    	resultType
+		infos {
+	  		loginId
+	  		createdTime
+	  		lastLoginTime
+		}
+    }
+}
+
 ```
 
 ## Test

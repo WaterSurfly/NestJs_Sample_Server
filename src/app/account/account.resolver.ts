@@ -42,7 +42,6 @@ export class AccountResolver {
         return this.accountService.getAccountInfo(loginId);
     }
 
-    @UseGuards(AuthGuard)
     @Query(() => GetAllAccountInfosOutput)
     async getAllAccountInfo() {
         return this.accountService.getAllAccountInfo();
