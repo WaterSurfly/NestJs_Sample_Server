@@ -13,8 +13,10 @@ import {AccountRepository} from '../../database/dbAuth/repository/account.reposi
 import {AccountEntity} from 'src/database/dbAuth/entity/account.entity';
 import {AccountInput} from './input/account-input';
 import {TimeHelper} from '../../utils/time-helper';
-import {GetAccountInfoOutput, GetAllAccountInfosOutput} from "./output/account-output";
+import {AuthOutput, GetAccountInfoOutput, GetAllAccountInfosOutput} from "./output/account-output";
 import {ResultType} from "../../common/base/base-result.type";
+import {AuthService} from "../../common/auth/auth.service";
+
 
 @Injectable()
 export class AccountService {
@@ -23,6 +25,7 @@ export class AccountService {
     constructor(
         @InjectConnection(dbAuthConnectionName)
         private connection: Connection,
+        private authService: AuthService,
         @Inject(Logger) private readonly logger: LoggerService,
     ) {
         this.accountRepository =
@@ -37,7 +40,7 @@ export class AccountService {
         return 'GET Account!!! Hello2';
     }
 
-    private async checkAccountExists(loginId: string): Promise<boolean> {
+    async checkAccountExists(loginId: string): Promise<boolean> {
         const account = await this.accountRepository.findOne({
             loginId,
         });
@@ -73,15 +76,43 @@ export class AccountService {
         }
     }
 
+    async auth(id: string): Promise<any> {
+        let rs;
+        const isExist = await this.checkAccountExists(id);
+        if (isExist) { // 계정 존재
+            rs = await this.getAccountInfo(id);
+
+        } else {
+            // 계정 생성
+            const accountInput = new AccountInput();
+            accountInput.loginId = id;
+            rs = await this.createAccount(accountInput);
+
+        }
+
+        const reqTime = TimeHelper.getUtcTime();
+
+        const authRs = new AuthOutput();
+        authRs.resultType = rs.resultType;
+        authRs.info = rs.info;
+        const accountId = rs.info.accountId;
+        authRs.token = this.authService.generateToken({id ,accountId, reqTime});
+
+        return authRs;
+    }
+
     async login(loginId: string): Promise<object> {
         const isExist = await this.checkAccountExists(loginId);
 
         if (!isExist) {
-            throw new InternalServerErrorException('로그인 실패하였습니다.');
+            const rs = new GetAccountInfoOutput();
+            rs.resultType = ResultType.Fail;
+            return rs;
         }
 
         await this.updateLastLoginTime(loginId);
         return await this.getAccountInfo(loginId);
+
     }
 
     async createAccount(account: AccountInput) {

@@ -76,6 +76,14 @@ const loadConfigs = [emailConfig, authConfig, globalConfig];
                 path: join(process.cwd(), 'src/graphql.ts'),
             },
             playground: true,
+            context : ({ req, connection }) => {
+                if(req) {
+                    const user = req.headers.authorization;
+                    return { ...req, user }
+                } else {
+                    return connection;
+                }
+            }
         }),
         ExceptionModule,
         LoggingModule,

@@ -15,6 +15,12 @@ export class AccountInfoDto {
     lastLoginTime: Date;
 }
 
+// Response Output : get auth
+export class AuthOutput extends BaseResultType {
+    info : AccountInfoDto
+    token: string
+}
+
 // Response Output : get one account
 export class GetAccountInfoOutput extends BaseResultType {
     info : AccountInfoDto

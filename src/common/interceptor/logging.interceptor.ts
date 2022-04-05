@@ -53,9 +53,11 @@ export class LoggingInterceptor implements NestInterceptor {
                 .handle()
                 .pipe(
                     map((data) => {
-                        data['key'] = key;
-                        data['typename'] = typename;
-                        return data;
+                        if(data) {
+                            data['key'] = key ? key : '';
+                            data['typename'] = typename ? typename : '';
+                            return data;
+                        }
                     }),
                     tap((data) =>
                         this.logger.log(

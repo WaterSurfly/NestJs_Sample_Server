@@ -9,6 +9,12 @@ interface User {
     email: string;
 }
 
+interface User4Guest {
+    id: string;
+    accountId: string;
+    reqTime : string;
+}
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -38,6 +44,43 @@ export class AuthService {
             return {
                 userId: id,
                 email,
+            };
+        } catch (e) {
+            throw new UnauthorizedException();
+        }
+    }
+
+    generateToken(user: User4Guest) {
+        const payload = { ...user };
+
+        return jwt.sign(payload, this.config.jwtSecret, {
+            expiresIn: '1d',
+            audience: 'http://127.0.0.1:3000',
+            issuer: 'com.app.guest',
+        });
+    }
+
+    verifyToken(jwtString: string, info: any) {
+        try {
+            const payload = jwt.verify(jwtString, this.config.jwtSecret) as (
+                | jwt.JwtPayload
+                | string
+                ) &
+                User4Guest;
+
+            const { id, reqTime } = payload;
+
+            if(!info) {
+                throw new UnauthorizedException();
+            }
+
+            if(info.loginId !== id) {
+                throw new UnauthorizedException();
+            }
+
+            return {
+                id,
+                reqTime
             };
         } catch (e) {
             throw new UnauthorizedException();

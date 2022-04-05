@@ -49,6 +49,17 @@ export default registerAs('global', () => ({
                     process.env.DATABASE_AUTH_NAME +
                     '/*.entity{.ts,.js}',
             ],
+            migrations: [
+                __dirname +
+                    '/database/' +
+                    process.env.DATABASE_AUTH_NAME +
+                    '/*{.ts,.js}',
+            ],
+            migrationsTableName: 'migrations_typeorm',
+            migrationsRun: true,
+            cli: {
+                migrationsDir: 'src/database/'+ process.env.DATABASE_AUTH_NAME +'/migrations'
+            }
         },
         dbCommon: {
             type: process.env.DATABASE_TYPE,
