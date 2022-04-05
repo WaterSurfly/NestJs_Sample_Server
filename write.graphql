@@ -1,3 +1,10 @@
+######################### Account ##########################
+################ Input
+input CreateAccountInput {
+    loginId: String!
+}
+
+################ Output
 type AuthOutput {
     resultType: Int
     info: AccountEntity
@@ -14,6 +21,7 @@ type AccountOutput {
     info : AccountEntity
 }
 
+################ Entity
 type AccountEntity {
     accountId: Int!
     loginId: String!
@@ -21,6 +29,30 @@ type AccountEntity {
     lastLoginTime: String
 }
 
+######################### Player ##########################
+################ Input
+
+################ Output
+type GetPlayerInfoOutput {
+    resultType: Int
+    info: PlayerEntity
+}
+
+################ Entity
+type PlayerEntity {
+    accountId: Int!
+    nick: String!
+    createdTime: String
+}
+
+
+
+
+
+
+
+######################### Use GraphQL ##########################
+################ Query
 type Query {
     hello: String!
     hello2: String!
@@ -29,14 +61,11 @@ type Query {
     login(accountId: Int!): AccountOutput
     getAccountInfo(accountId: Int!): AccountOutput
     getAllAccountInfo: AccountsOutput
+
+    getPlayerInfo(accountId: Int!): GetPlayerInfoOutput
 }
 
-input CreateAccountInput {
-    loginId: String!
-}
-
+################ Mutation
 type Mutation {
     createAccount(createAccountInput: CreateAccountInput): AccountOutput
 }
-
-

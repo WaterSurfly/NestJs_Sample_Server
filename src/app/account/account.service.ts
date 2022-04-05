@@ -6,16 +6,21 @@ import {
     LoggerService,
     UnprocessableEntityException,
 } from '@nestjs/common';
-import {InjectConnection} from '@nestjs/typeorm';
-import {Connection} from 'typeorm';
-import {dbAuthConnectionName} from '../../database/database.constants';
-import {AccountRepository} from '../../database/dbAuth/repository/account.repository';
-import {AccountEntity} from 'src/database/dbAuth/entity/account.entity';
-import {AccountInput} from './input/account-input';
-import {TimeHelper} from '../../utils/time-helper';
-import {AuthOutput, GetAccountInfoOutput, GetAllAccountInfosOutput} from "./output/account-output";
-import {ResultType} from "../../common/base/base-result.type";
-import {AuthService} from "../../common/auth/auth.service";
+import { InjectConnection } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
+import { dbAuthConnectionName } from '../../database/database.constants';
+import { AccountRepository } from '../../database/dbAuth/repository/account.repository';
+import { AccountEntity } from 'src/database/dbAuth/entity/account.entity';
+import { AccountInput } from './input/account-input';
+import { TimeHelper } from '../../utils/time-helper';
+import {
+    AuthOutput,
+    GetAccountInfoOutput,
+    GetAllAccountInfosOutput,
+} from './output/account-output';
+import { ResultType } from '../../common/base/base-result.type';
+import { AuthService } from '../../common/auth/auth.service';
+import { PlayerService } from '../player/player.service';
 
 @Injectable()
 export class AccountService {
@@ -25,6 +30,7 @@ export class AccountService {
         @InjectConnection(dbAuthConnectionName)
         private authConn: Connection,
         private authService: AuthService,
+        private playerService: PlayerService,
         @Inject(Logger) private readonly logger: LoggerService,
     ) {
         this.accountRepository =
@@ -42,15 +48,19 @@ export class AccountService {
     async auth(id: string): Promise<any> {
         let rs;
         const isExist = await this.checkAccountExist(id);
-        if (isExist) { // 계정 존재
+        if (isExist) {
+            // 계정 존재
             rs = await this.getAccountInfo(id);
-
         } else {
             // 계정 생성
             const accountInput = new AccountInput();
             accountInput.loginId = id;
             rs = await this.createAccount(accountInput);
-
+            this.logger.log(
+                `#AccountService #Msg=Create Account!!! : ${JSON.stringify(
+                    rs,
+                )}`,
+            );
         }
 
         const reqTime = TimeHelper.getUtcTime();
@@ -59,21 +69,25 @@ export class AccountService {
         authRs.resultType = rs.resultType;
         authRs.info = rs.info;
         const accountId = rs.info.accountId;
-        authRs.token = this.authService.generateToken({id ,accountId, reqTime});
+        authRs.token = this.authService.generateToken({
+            id,
+            accountId,
+            reqTime,
+        });
 
         return authRs;
     }
 
     async login(accountId: number): Promise<any> {
-        const isExist = await this.checkAccountExist(accountId);
-
-        if (!isExist) {
+        const isAccountExist = await this.checkAccountExist(accountId);
+        if (!isAccountExist) {
             const rs = new GetAccountInfoOutput();
             rs.resultType = ResultType.Fail;
             return rs;
         }
 
         await this.updateLastLoginTime(accountId);
+        await this.playerService.createPlayer(accountId);
         return await this.getAccountInfo(accountId);
     }
 
@@ -99,10 +113,10 @@ export class AccountService {
     async checkAccountExist(value: any) {
         let condition;
         const type = typeof value;
-        if(type === 'number') {
+        if (type === 'number') {
             condition = { accountId: value };
         } else {
-            condition = { loginId: value }
+            condition = { loginId: value };
         }
         const account = await this.accountRepository.findOne(condition);
         return !!account;
@@ -140,10 +154,10 @@ export class AccountService {
     async getAccountInfo(value: any) {
         let condition;
         const type = typeof value;
-        if(type === 'number') {
+        if (type === 'number') {
             condition = { accountId: value };
         } else {
-            condition = { loginId: value }
+            condition = { loginId: value };
         }
         const account = await this.accountRepository.findOne(condition);
 
@@ -166,18 +180,10 @@ export class AccountService {
     async getAllAccountInfo() {
         const accounts = await this.accountRepository.find();
 
-        const rs = new GetAllAccountInfosOutput()
+        const rs = new GetAllAccountInfosOutput();
         rs.resultType = ResultType.Success;
         rs.infos = accounts;
 
         return rs;
-    }
-
-    async getPlayerInfo() {
-
-    }
-
-    async createPlayer() {
-
     }
 }
