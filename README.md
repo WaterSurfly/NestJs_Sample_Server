@@ -1,4 +1,3 @@
-
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript Sample Server Repository.
@@ -23,11 +22,13 @@ $ npm run start:prod
 ```
 
 ## Chat
+
 ```bash
 http://127.0.0.1:3000/chat
 ```
 
 ## GraphQL
+
 ```bash
 http://127.0.0.1:3000/graphql
 
@@ -97,6 +98,17 @@ query {
     }
 }
 
+query {
+  getPlayerInfo(accountId: number) {
+  	resultType
+  	info {
+		accountId
+		nick
+		createdTime
+  	}
+  }
+}
+
 ```
 
 ## Test
@@ -111,7 +123,6 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
-
 
 ## License
 
