@@ -15,6 +15,7 @@ import { map, Observable, tap } from 'rxjs';
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
     constructor(private logger: Logger) {}
+
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const contextType = context.getType();
         if (contextType === 'http') {
@@ -49,24 +50,22 @@ export class LoggingInterceptor implements NestInterceptor {
                 )}`,
             );
 
-            return next
-                .handle()
-                .pipe(
-                    map((data) => {
-                        if(data) {
-                            data['key'] = key ? key : '';
-                            data['typename'] = typename ? typename : '';
-                            return data;
-                        }
-                    }),
-                    tap((data) =>
-                        this.logger.log(
-                            `Response GraphQL from ${typename} : ${key} \n response: ${JSON.stringify(
-                                data,
-                            )}`,
-                        ),
+            return next.handle().pipe(
+                map((data) => {
+                    if (data && typeof data === 'object') {
+                        data['key'] = key ? key : '';
+                        data['typename'] = typename ? typename : '';
+                        return data;
+                    }
+                }),
+                tap((data) =>
+                    this.logger.log(
+                        `Response GraphQL from ${typename} : ${key} \n response: ${JSON.stringify(
+                            data,
+                        )}`,
                     ),
-                );
+                ),
+            );
         }
     }
 }

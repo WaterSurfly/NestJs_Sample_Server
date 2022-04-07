@@ -7,11 +7,11 @@ import {
     Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { GqlContextType } from '@nestjs/graphql';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
     constructor(private logger: Logger) {}
+
     catch(exception: Error, host: ArgumentsHost) {
         const getType = host.getType();
 

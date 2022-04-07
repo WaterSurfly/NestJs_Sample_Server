@@ -1,34 +1,21 @@
-import {
-    MiddlewareConsumer,
-    Module,
-    NestModule,
-    RequestMethod,
-} from '@nestjs/common';
-import { UsersModule } from './app/users/users.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import emailConfig from './config/emailConfig';
-import { validationSchema } from './config/validationSchema';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { LoggerMiddleware } from './common/logger/logger.middleware';
-import { UsersController } from './app/users/users.controller';
-import { Logger2Middleware } from './common/logger/logger2.middleware';
+import {Module} from '@nestjs/common';
+import {ConfigModule, ConfigService} from '@nestjs/config';
+import {validationSchema} from './config/validationSchema';
+import {TypeOrmModule} from '@nestjs/typeorm';
 import authConfig from './config/authConfig';
-import { ExceptionModule } from './common/exception/exception.module';
-import { LoggingModule } from './common/interceptor/logging.module';
-import { BatchModule } from './common/batch/batch.module';
-import { TerminusModule } from '@nestjs/terminus';
-import { HttpModule } from '@nestjs/axios';
-import { Users2Module } from './app/users2/users2.module';
+import {ExceptionModule} from './common/exception/exception.module';
+import {LoggingModule} from './common/interceptor/logging.module';
+import {BatchModule} from './common/batch/batch.module';
+import {TerminusModule} from '@nestjs/terminus';
+import {HttpModule} from '@nestjs/axios';
 import globalConfig from './config/globalConfig';
-import { AccountModule } from './app/account/account.module';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { join } from 'path';
-import { ChatModule } from './app/chat/chat.module';
-import {response} from "express";
-import {GraphQLError, GraphQLFormattedError} from "graphql";
+import {AccountModule} from './app/account/account.module';
+import {GraphQLModule} from '@nestjs/graphql';
+import {ApolloDriver, ApolloDriverConfig} from '@nestjs/apollo';
+import {join} from 'path';
+import {ChatModule} from './app/chat/chat.module';
 
-const loadConfigs = [emailConfig, authConfig, globalConfig];
+const loadConfigs = [authConfig, globalConfig];
 
 @Module({
     imports: [
@@ -76,10 +63,10 @@ const loadConfigs = [emailConfig, authConfig, globalConfig];
                 path: join(process.cwd(), 'src/graphql.ts'),
             },
             playground: true,
-            context : ({ req, connection }) => {
-                if(req) {
+            context: ({req, connection}) => {
+                if (req) {
                     const user = req.headers.authorization;
-                    return { ...req, user }
+                    return {...req, user}
                 } else {
                     return connection;
                 }
@@ -91,21 +78,10 @@ const loadConfigs = [emailConfig, authConfig, globalConfig];
         TerminusModule,
         HttpModule,
         ChatModule,
-        UsersModule,
-        Users2Module,
         AccountModule,
     ],
     controllers: [],
     providers: [],
 })
-export class AppModule {}
-/*
-export class AppModule implements NestModule {
-
-    configure(consumer: MiddlewareConsumer): any {
-        consumer
-            .apply(LoggerMiddleware, Logger2Middleware)
-            .forRoutes();
-    }
+export class AppModule {
 }
-*/

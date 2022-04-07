@@ -1,14 +1,13 @@
-import { Inject, Injectable, Logger, LoggerService } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
-import { dbGameConnectionName } from '../../database/database.constants';
-import { TimeHelper } from '../../utils/time-helper';
-import { AuthService } from '../../common/auth/auth.service';
-import { PlayerRepository } from '../../database/dbGame/repository/player.repository';
-import { PlayerEntity } from '../../database/dbGame/entity/player.entity';
-import { GetAccountInfoOutput } from '../account/output/account-output';
-import { ResultType } from '../../common/base/base-result.type';
-import { GetPlayerInfoOutput } from './output/player-output';
+import {Inject, Injectable, Logger, LoggerService} from '@nestjs/common';
+import {InjectConnection} from '@nestjs/typeorm';
+import {Connection} from 'typeorm';
+import {dbGameConnectionName} from '../../database/database.constants';
+import {TimeHelper} from '../../utils/time-helper';
+import {AuthService} from '../../common/auth/auth.service';
+import {PlayerRepository} from '../../database/dbGame/repository/player.repository';
+import {PlayerEntity} from '../../database/dbGame/entity/player.entity';
+import {ResultType} from '../../common/base/base-result.type';
+import {GetPlayerInfoOutput} from './output/player-output.dto';
 
 @Injectable()
 export class PlayerService {
@@ -25,7 +24,7 @@ export class PlayerService {
     }
 
     async checkPlayerExist(accountId: number) {
-        const player = await this.playerRepository.findOne({ accountId });
+        const player = await this.playerRepository.findOne({accountId});
         return !!player;
     }
 
@@ -66,7 +65,7 @@ export class PlayerService {
     }
 
     async getPlayerInfo(accountId: number) {
-        const player = await this.playerRepository.findOne({ accountId });
+        const player = await this.playerRepository.findOne({accountId});
 
         const rs = new GetPlayerInfoOutput();
         rs.resultType = ResultType.Success;

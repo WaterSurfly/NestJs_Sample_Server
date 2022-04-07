@@ -1,4 +1,4 @@
-import { registerAs } from '@nestjs/config';
+import {registerAs} from '@nestjs/config';
 
 export default registerAs('global', () => ({
     db: {
@@ -13,9 +13,9 @@ export default registerAs('global', () => ({
             database: process.env.DATABASE_NAME,
             entities: [
                 __dirname +
-                    '/database/' +
-                    process.env.DATABASE_NAME +
-                    '/*.entity{.ts,.js}',
+                '/database/' +
+                process.env.DATABASE_NAME +
+                '/*.entity{.ts,.js}',
             ],
         },
         dbTest2: {
@@ -29,9 +29,9 @@ export default registerAs('global', () => ({
             database: process.env.DATABASE_TEST2_NAME,
             entities: [
                 __dirname +
-                    '/database/' +
-                    process.env.DATABASE_TEST2_NAME +
-                    '/*.entity{.ts,.js}',
+                '/database/' +
+                process.env.DATABASE_TEST2_NAME +
+                '/*.entity{.ts,.js}',
             ],
         },
         dbAuth: {
@@ -45,21 +45,24 @@ export default registerAs('global', () => ({
             database: process.env.DATABASE_AUTH_NAME,
             entities: [
                 __dirname +
-                    '/database/' +
-                    process.env.DATABASE_AUTH_NAME +
-                    '/*.entity{.ts,.js}',
+                '/database/' +
+                process.env.DATABASE_AUTH_NAME +
+                '/*.entity{.ts,.js}',
             ],
             migrations: [
                 __dirname +
-                    '/database/' +
-                    process.env.DATABASE_AUTH_NAME +
-                    '/*{.ts,.js}',
+                '/database/' +
+                process.env.DATABASE_AUTH_NAME +
+                '/*{.ts,.js}',
             ],
             migrationsTableName: 'migrations_typeorm',
             migrationsRun: true,
             cli: {
-                migrationsDir: 'src/database/'+ process.env.DATABASE_AUTH_NAME +'/migrations'
-            }
+                migrationsDir:
+                    'src/database/' +
+                    process.env.DATABASE_AUTH_NAME +
+                    '/migrations',
+            },
         },
         dbCommon: {
             type: process.env.DATABASE_TYPE,
@@ -72,9 +75,9 @@ export default registerAs('global', () => ({
             database: process.env.DATABASE_COMMON_NAME,
             entities: [
                 __dirname +
-                    '/database/' +
-                    process.env.DATABASE_AUTH_NAME +
-                    '/*.entity{.ts,.js}',
+                '/database/' +
+                process.env.DATABASE_AUTH_NAME +
+                '/*.entity{.ts,.js}',
             ],
         },
         dbGame: {
@@ -88,9 +91,9 @@ export default registerAs('global', () => ({
             database: process.env.DATABASE_GAME_NAME,
             entities: [
                 __dirname +
-                    '/database/' +
-                    process.env.DATABASE_AUTH_NAME +
-                    '/*.entity{.ts,.js}',
+                '/database/' +
+                process.env.DATABASE_AUTH_NAME +
+                '/*.entity{.ts,.js}',
             ],
         },
     },

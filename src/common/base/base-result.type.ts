@@ -1,10 +1,9 @@
-
 export class BaseResultType {
-    resultType : ResultType
+    resultType: ResultType;
 }
 
 export enum ResultType {
-    None,
-    Success,
-    Fail
+    None = 'None',
+    Success = 'Success',
+    Fail = 'Fail',
 }

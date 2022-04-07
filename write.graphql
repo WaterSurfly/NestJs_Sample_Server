@@ -6,18 +6,18 @@ input CreateAccountInput {
 
 ################ Output
 type AuthOutput {
-    resultType: Int
+    resultType: String
     info: AccountEntity
     token: String
 }
 
 type AccountsOutput {
-    resultType: Int
+    resultType: String
     infos : [AccountEntity]
 }
 
 type AccountOutput {
-    resultType: Int
+    resultType: String
     info : AccountEntity
 }
 
@@ -34,7 +34,7 @@ type AccountEntity {
 
 ################ Output
 type GetPlayerInfoOutput {
-    resultType: Int
+    resultType: String
     info: PlayerEntity
 }
 
@@ -44,11 +44,6 @@ type PlayerEntity {
     nick: String!
     createdTime: String
 }
-
-
-
-
-
 
 
 ######################### Use GraphQL ##########################

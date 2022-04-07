@@ -1,15 +1,17 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AccountService } from './account.service';
-import { AccountInput } from './input/account-input';
-import {AuthOutput, GetAccountInfoOutput, GetAllAccountInfosOutput} from "./output/account-output";
-import { AuthGuard } from "../../auth.guard";
+import { AccountInputDto } from './input/account-input.dto';
+import {
+    AuthOutput,
+    GetAccountInfoOutput,
+    GetAllAccountInfosOutput,
+} from './output/account-output.dto';
+import { AuthGuard } from '../../auth.guard';
 
 @Resolver('account')
 export class AccountResolver {
-    constructor(
-        private accountService: AccountService,
-    ) {}
+    constructor(private accountService: AccountService) {}
 
     @Query(() => String)
     async hello() {
@@ -22,7 +24,7 @@ export class AccountResolver {
     }
 
     // First
-    @Query( () => AuthOutput)
+    @Query(() => AuthOutput)
     async auth(@Args('id', { type: () => String }) id: string) {
         return this.accountService.auth(id);
     }
@@ -30,7 +32,7 @@ export class AccountResolver {
     // Second (Add token in request.headers.authorization)
     // ex) { "Authorization":"Bearer :tokenString "}
     @UseGuards(AuthGuard) // jwt verify
-    @Query( () => GetAccountInfoOutput)
+    @Query(() => GetAccountInfoOutput)
     async login(@Args('accountId', { type: () => Number }) accountId: number) {
         return this.accountService.login(accountId);
     }
@@ -47,8 +49,10 @@ export class AccountResolver {
         return this.accountService.getAllAccountInfo();
     }
 
-    @Mutation( () => GetAccountInfoOutput)
-    async createAccount(@Args('createAccountInput') createAccountInput: AccountInput) {
+    @Mutation(() => GetAccountInfoOutput)
+    async createAccount(
+        @Args('createAccountInput') createAccountInput: AccountInputDto,
+    ) {
         return await this.accountService.createAccount(createAccountInput);
     }
 }

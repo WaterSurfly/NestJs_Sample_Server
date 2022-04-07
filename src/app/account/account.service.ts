@@ -11,16 +11,17 @@ import { Connection } from 'typeorm';
 import { dbAuthConnectionName } from '../../database/database.constants';
 import { AccountRepository } from '../../database/dbAuth/repository/account.repository';
 import { AccountEntity } from 'src/database/dbAuth/entity/account.entity';
-import { AccountInput } from './input/account-input';
+import { AccountInputDto } from './input/account-input.dto';
 import { TimeHelper } from '../../utils/time-helper';
 import {
     AuthOutput,
     GetAccountInfoOutput,
     GetAllAccountInfosOutput,
-} from './output/account-output';
+} from './output/account-output.dto';
 import { ResultType } from '../../common/base/base-result.type';
 import { AuthService } from '../../common/auth/auth.service';
 import { PlayerService } from '../player/player.service';
+import { RedisCacheService } from '../../common/cache/redis/redis-cache.service';
 
 @Injectable()
 export class AccountService {
@@ -32,12 +33,25 @@ export class AccountService {
         private authService: AuthService,
         private playerService: PlayerService,
         @Inject(Logger) private readonly logger: LoggerService,
+        private redisCacheService: RedisCacheService,
     ) {
         this.accountRepository =
             this.authConn.getCustomRepository(AccountRepository);
     }
 
-    hello(): string {
+    async hello(): Promise<string> {
+        const setRs = await this.redisCacheService.set('aa', 12345);
+        this.logger.warn(`setRs: ${setRs}`);
+
+        const getRs = await this.redisCacheService.get('aa');
+        this.logger.warn(`getRs: ${getRs}`);
+
+        const hsetRs = await this.redisCacheService.hset('bb', 'a', 11231);
+        this.logger.warn(`hsetRs: ${hsetRs}`);
+
+        const hgetallRs = await this.redisCacheService.hgetall('bb');
+        this.logger.warn(`hgetallRs: ${JSON.stringify(hgetallRs)}`);
+
         return 'GET Account!!! Hello';
     }
 
@@ -47,13 +61,14 @@ export class AccountService {
 
     async auth(id: string): Promise<any> {
         let rs;
+
         const isExist = await this.checkAccountExist(id);
         if (isExist) {
             // 계정 존재
             rs = await this.getAccountInfo(id);
         } else {
             // 계정 생성
-            const accountInput = new AccountInput();
+            const accountInput = new AccountInputDto();
             accountInput.loginId = id;
             rs = await this.createAccount(accountInput);
             this.logger.log(
@@ -91,7 +106,7 @@ export class AccountService {
         return await this.getAccountInfo(accountId);
     }
 
-    async createAccount(account: AccountInput) {
+    async createAccount(account: AccountInputDto) {
         const isExist = await this.checkAccountExist(account.loginId);
         if (isExist) {
             const rs = new GetAccountInfoOutput();

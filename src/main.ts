@@ -1,6 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import * as winston from 'winston';
 import {
     utilities as nestWinstonModuleUtilities,
@@ -11,11 +10,10 @@ import { GlobalLoggerMiddleware } from './common/logger/global-logger.middleware
 import compression from 'compression';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { RedisIoAdapter } from './app/chat/redis.adapter';
-import helmet, {contentSecurityPolicy} from 'helmet';
-import csurf from 'csurf';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc'
+import utc from 'dayjs/plugin/utc';
+import { RedisIoAdapter } from './app/chat/redis.adapter';
+
 dayjs.extend(utc);
 
 async function bootstrap() {
@@ -30,7 +28,11 @@ async function bootstrap() {
                     format: winston.format.combine(
                         winston.format.timestamp({
                             format: () =>
-                                `${dayjs().format('YYYY-MM-DD HH:mm:ss')} / ${dayjs().utc().format('(UTC) YYYY-MM-DD HH:mm:ss')}`
+                                `${dayjs().format(
+                                    'YYYY-MM-DD HH:mm:ss',
+                                )} / ${dayjs()
+                                    .utc()
+                                    .format('(UTC) YYYY-MM-DD HH:mm:ss')}`,
                         }),
                         nestWinstonModuleUtilities.format.nestLike('Sample', {
                             prettyPrint: true,
@@ -48,12 +50,10 @@ async function bootstrap() {
     );
     app.use(GlobalLoggerMiddleware);
     app.use(compression());
-    //app.use(helmet());
-    //app.use(csurf());
-    app.useWebSocketAdapter(new RedisIoAdapter(app));
     app.useStaticAssets(join(__dirname, '..', 'static'));
+    app.useWebSocketAdapter(new RedisIoAdapter(app));
     app.enableCors();
-    // app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
     await app.listen(process.env.NODE_PORT);
 }
+
 bootstrap();
