@@ -1,13 +1,17 @@
-import {Inject, Injectable, Logger, LoggerService} from '@nestjs/common';
-import {InjectConnection} from '@nestjs/typeorm';
-import {Connection} from 'typeorm';
-import {dbGameConnectionName} from '../../database/database.constants';
-import {TimeHelper} from '../../utils/time-helper';
-import {AuthService} from '../../common/auth/auth.service';
-import {PlayerRepository} from '../../database/dbGame/repository/player.repository';
-import {PlayerEntity} from '../../database/dbGame/entity/player.entity';
-import {ResultType} from '../../common/base/base-result.type';
-import {GetPlayerInfoOutput} from './output/player-output.dto';
+import { Inject, Injectable, Logger, LoggerService } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
+import { dbGameConnectionName } from '../../database/database.constants';
+import { TimeHelper } from '../../utils/time-helper';
+import { AuthService } from '../../common/auth/auth.service';
+import { PlayerRepository } from '../../database/dbGame/repository/player.repository';
+import { PlayerEntity } from '../../database/dbGame/entity/player.entity';
+import { ResultType } from '../../common/base/base-result.type';
+import { GetPlayerInfoOutput } from './output/player-output.dto';
+import {
+    ExecDbTransactionUsingQueryRunner,
+    ExecDbTransaction,
+} from '../../database/database-helper';
 
 @Injectable()
 export class PlayerService {
@@ -24,48 +28,41 @@ export class PlayerService {
     }
 
     async checkPlayerExist(accountId: number) {
-        const player = await this.playerRepository.findOne({accountId});
+        const player = await this.playerRepository.findOne({ accountId });
         return !!player;
     }
 
     async createPlayer(accountId: number) {
-        const isExist = await this.checkPlayerExist(accountId);
-        if (!isExist) {
-            await this.savePlayerUsingQueryRunner(accountId);
-        }
-    }
-
-    async savePlayerUsingQueryRunner(accountId: number): Promise<boolean> {
-        const queryRunner = this.gameConn.createQueryRunner();
-
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-
         try {
-            const now = TimeHelper.getUtcDate();
-            const player = new PlayerEntity();
-            player.accountId = accountId;
-            player.nick = `U-${accountId}`;
-            player.createdTime = now;
+            const isExist = await this.checkPlayerExist(accountId);
+            if (!isExist) {
+                const players = [];
+                const now = TimeHelper.getUtcDate();
+                const player = new PlayerEntity();
+                player.accountId = accountId;
+                player.nick = `U-${accountId}`;
+                player.createdTime = now;
+                players.push(player);
 
-            await queryRunner.manager.save(player);
+                const rs = await ExecDbTransaction(
+                    this.playerRepository,
+                    players,
+                );
 
-            //throw new InternalServerErrorException(); // forced error
-
-            await queryRunner.commitTransaction();
-
-            return true;
+                if (!rs) {
+                    throw new Error('Player create fail DB!!!');
+                }
+            }
         } catch (e) {
             this.logger.error(e);
-            await queryRunner.rollbackTransaction();
-            return false;
-        } finally {
-            await queryRunner.release();
+            const rs = new GetPlayerInfoOutput();
+            rs.resultType = ResultType.Fail;
+            return rs;
         }
     }
 
     async getPlayerInfo(accountId: number) {
-        const player = await this.playerRepository.findOne({accountId});
+        const player = await this.playerRepository.findOne({ accountId });
 
         const rs = new GetPlayerInfoOutput();
         rs.resultType = ResultType.Success;

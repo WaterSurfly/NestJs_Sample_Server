@@ -22,10 +22,14 @@ import { ResultType } from '../../common/base/base-result.type';
 import { AuthService } from '../../common/auth/auth.service';
 import { PlayerService } from '../player/player.service';
 import { RedisCacheService } from '../../common/cache/redis/redis-cache.service';
+import {
+    ExecDbTransactionUsingQueryRunner,
+    ExecDbTransaction,
+} from '../../database/database-helper';
 
 @Injectable()
 export class AccountService {
-    private accountRepository: AccountRepository;
+    private readonly accountRepository: AccountRepository;
 
     constructor(
         @InjectConnection(dbAuthConnectionName)
@@ -71,6 +75,9 @@ export class AccountService {
             const accountInput = new AccountInputDto();
             accountInput.loginId = id;
             rs = await this.createAccount(accountInput);
+            if (rs.resultType === ResultType.Fail) {
+                return rs;
+            }
             this.logger.log(
                 `#AccountService #Msg=Create Account!!! : ${JSON.stringify(
                     rs,
@@ -79,7 +86,6 @@ export class AccountService {
         }
 
         const reqTime = TimeHelper.getUtcTime();
-
         const authRs = new AuthOutput();
         authRs.resultType = rs.resultType;
         authRs.info = rs.info;
@@ -107,22 +113,44 @@ export class AccountService {
     }
 
     async createAccount(account: AccountInputDto) {
-        const isExist = await this.checkAccountExist(account.loginId);
-        if (isExist) {
+        try {
+            const isExist = await this.checkAccountExist(account.loginId);
+            if (isExist) {
+                throw new Error('Account exist!!!');
+            }
+
+            const accounts = [];
+            const now = TimeHelper.getUtcDate();
+            const accountEntity = new AccountEntity();
+            accountEntity.loginId = account.loginId;
+            accountEntity.createdTime = now;
+            accountEntity.lastLoginTime = now;
+            accounts.push(accountEntity);
+
+            // 계정생성 case 1.
+            //const rs = await ExecDbTransactionUsingQueryRunner(
+            //    this.authConn,
+            //    accounts,
+            //);
+
+            // 계정생성 case 2.
+            const rs = await ExecDbTransaction(
+                this.accountRepository,
+                accounts,
+            );
+
+            if (!rs) {
+                throw new Error('Account create fail DB!!!');
+            }
+
+            return await this.getAccountInfo(account.loginId);
+        } catch (e) {
+            this.logger.error(e);
+
             const rs = new GetAccountInfoOutput();
             rs.resultType = ResultType.Fail;
             return rs;
         }
-
-        // 계정생성
-        const rs = await this.saveAccountUsingQueryRunner(account.loginId);
-        if (!rs) {
-            const rs = new GetAccountInfoOutput();
-            rs.resultType = ResultType.Fail;
-            return rs;
-        }
-
-        return await this.getAccountInfo(account.loginId);
     }
 
     async checkAccountExist(value: any) {
@@ -135,35 +163,6 @@ export class AccountService {
         }
         const account = await this.accountRepository.findOne(condition);
         return !!account;
-    }
-
-    async saveAccountUsingQueryRunner(loginId: string): Promise<boolean> {
-        const queryRunner = this.authConn.createQueryRunner();
-
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-
-        try {
-            const now = TimeHelper.getUtcDate();
-            const account = new AccountEntity();
-            account.loginId = loginId;
-            account.createdTime = now;
-            account.lastLoginTime = now;
-
-            await queryRunner.manager.save(account);
-
-            //throw new InternalServerErrorException(); // forced error
-
-            await queryRunner.commitTransaction();
-
-            return true;
-        } catch (e) {
-            this.logger.error(e);
-            await queryRunner.rollbackTransaction();
-            return false;
-        } finally {
-            await queryRunner.release();
-        }
     }
 
     async getAccountInfo(value: any) {
