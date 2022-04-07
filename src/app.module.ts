@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { validationSchema } from './config/validationSchema';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import authConfig from './config/authConfig';
 import { ExceptionModule } from './common/exception/exception.module';
 import { LoggingModule } from './common/interceptor/logging.module';
@@ -14,6 +13,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { ChatModule } from './app/chat/chat.module';
+import { DatabaseCoreModule } from './database/database-core.module';
 
 const loadConfigs = [authConfig, globalConfig];
 
@@ -27,35 +27,7 @@ const loadConfigs = [authConfig, globalConfig];
             isGlobal: true,
             validationSchema,
         }),
-        TypeOrmModule.forRootAsync({
-            useFactory: (config: ConfigService) =>
-                config.get('global.db.dbTest'),
-            inject: [ConfigService],
-        }),
-        TypeOrmModule.forRootAsync({
-            name: 'dbTest2',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbTest2'),
-            inject: [ConfigService],
-        }),
-        TypeOrmModule.forRootAsync({
-            name: 'dbAuth',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbAuth'),
-            inject: [ConfigService],
-        }),
-        TypeOrmModule.forRootAsync({
-            name: 'dbCommon',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbCommon'),
-            inject: [ConfigService],
-        }),
-        TypeOrmModule.forRootAsync({
-            name: 'dbGame',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbGame'),
-            inject: [ConfigService],
-        }),
+        DatabaseCoreModule,
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,
             typePaths: ['./**/*.graphql'],
