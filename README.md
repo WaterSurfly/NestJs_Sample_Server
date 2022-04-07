@@ -5,21 +5,59 @@
 ## Installation
 
 ```bash
-$ npm install --save
+$ npm install -g yarn
+
+$ yarn
 ```
 
 ## Running the app
 
 ```bash
 # development
-$ npm run start
-
 # watch mode
 $ npm run start:dev
 
 # production mode
 $ npm run start:prod
 ```
+
+## Docker
+
+```bash
+docker pull redis:6.0
+
+docker run -d --name redis-container -p 6379:6379 redis:6.0
+
+docker pull mariadb:10.4.24
+
+docker run -d --name mariadb-container -p 3306:3306 -e MYSQL_ROOT_PASSWORD=test1234 mariadb:10.4.24
+
+docker exec -it mariadb-container mysql -u root -p
+
+apt-get update
+apt-get install vim
+
+// edit my.cnf
+vi /etc/mysql/my.cnf
+
+lower_case_table_names=2
+
+// docker restart
+docker restart mariadb-container
+```
+
+## DB Init
+```bash
+// change synchronize : true
+src/config/env/globalConfig.ts 
+
+// 1. start server
+
+// 2. stop server
+
+// 3. change synchronize : false
+```
+
 
 ## Chat
 
