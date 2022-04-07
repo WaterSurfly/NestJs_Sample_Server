@@ -30,10 +30,14 @@ const loadConfigs = [authConfig, globalConfig];
         DatabaseCoreModule,
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,
-            typePaths: ['./**/*.graphql'],
-            definitions: {
-                path: join(process.cwd(), 'src/graphql.ts'),
-            },
+            autoSchemaFile: join(process.cwd(), 'src/common/graphql/schema.graphql'), // true : 파일을 별로 만드는 것 같지는 않은데 playGround에 반영됨, 파일경로: 파일 생성됨
+            debug: true,
+
+            //typePaths: ['./**/*.graphql'], // schema first case : 수동으로 만든 write.graphql 사용해서 처리
+            //definitions: {
+            //    path: join(process.cwd(), 'src/graphql.ts'),
+            //},
+
             playground: true,
             context: ({ req, connection }) => {
                 if (req) {

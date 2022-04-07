@@ -1,4 +1,8 @@
+import { ObjectType, Field } from '@nestjs/graphql';
+
+@ObjectType()
 export class BaseResultType {
+    @Field(() => String)
     resultType: ResultType;
 }
 
