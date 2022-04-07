@@ -1,17 +1,17 @@
 import { Inject, Injectable, Logger, LoggerService } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
 import { Connection } from 'typeorm';
-import { dbGameConnectionName } from '../../database/database.constants';
-import { TimeHelper } from '../../utils/time-helper';
+import { TimeHelper } from '../../utils';
 import { AuthService } from '../../common/auth/auth.service';
 import { PlayerRepository } from '../../database/dbGame/repository/player.repository';
 import { PlayerEntity } from '../../database/dbGame/entity/player.entity';
 import { ResultType } from '../../common/base/base-result.type';
 import { GetPlayerInfoOutput } from './output/player-output.dto';
 import {
+    dbGameConnectionName,
     ExecDbTransactionUsingQueryRunner,
     ExecDbTransaction,
-} from '../../database/database-helper';
+} from '../../database';
 
 @Injectable()
 export class PlayerService {

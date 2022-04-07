@@ -6,7 +6,7 @@ import compression from 'compression';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { RedisIoAdapter } from './app/chat/redis.adapter';
-import { logger } from './utils/main-helper';
+import { logger } from './utils';
 
 const appOptions = {
     logger,

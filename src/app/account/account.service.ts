@@ -1,18 +1,10 @@
-import {
-    Inject,
-    Injectable,
-    InternalServerErrorException,
-    Logger,
-    LoggerService,
-    UnprocessableEntityException,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger, LoggerService } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
 import { Connection } from 'typeorm';
-import { dbAuthConnectionName } from '../../database/database.constants';
 import { AccountRepository } from '../../database/dbAuth/repository/account.repository';
 import { AccountEntity } from 'src/database/dbAuth/entity/account.entity';
 import { AccountInputDto } from './input/account-input.dto';
-import { TimeHelper } from '../../utils/time-helper';
+import { TimeHelper } from '../../utils';
 import {
     AuthOutput,
     GetAccountInfoOutput,
@@ -23,9 +15,10 @@ import { AuthService } from '../../common/auth/auth.service';
 import { PlayerService } from '../player/player.service';
 import { RedisCacheService } from '../../common/cache/redis/redis-cache.service';
 import {
+    dbAuthConnectionName,
     ExecDbTransactionUsingQueryRunner,
     ExecDbTransaction,
-} from '../../database/database-helper';
+} from '../../database';
 
 @Injectable()
 export class AccountService {

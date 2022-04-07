@@ -1,16 +1,13 @@
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { utilities as nestWinstonModuleUtilities } from 'nest-winston/dist/winston.utilities';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
+import { TimeHelper } from './time-helper';
 
-dayjs.extend(utc);
-
-const localTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
-const utcTime = dayjs().utc().format('YYYY-MM-DD HH:mm:ss');
+const localTime = TimeHelper.getLocalTime();
+const utcTime = TimeHelper.getUtcTime();
 
 const timestampOption = {
-    format: () => `${utcTime} / ${localTime}`,
+    format: () => `${utcTime} ( ${localTime} )`,
 };
 
 export const logger = WinstonModule.createLogger({
