@@ -16,6 +16,13 @@ import { RedisIoAdapter } from './app/chat/redis.adapter';
 
 dayjs.extend(utc);
 
+const localTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
+const utcTime = dayjs().utc().format('YYYY-MM-DD HH:mm:ss');
+
+const timestampOption = {
+    format: () => `${utcTime} / ${localTime}`,
+};
+
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
         logger: WinstonModule.createLogger({
@@ -26,18 +33,26 @@ async function bootstrap() {
                             ? 'info'
                             : 'silly',
                     format: winston.format.combine(
-                        winston.format.timestamp({
-                            format: () =>
-                                `${dayjs().format(
-                                    'YYYY-MM-DD HH:mm:ss',
-                                )} / ${dayjs()
-                                    .utc()
-                                    .format('(UTC) YYYY-MM-DD HH:mm:ss')}`,
-                        }),
+                        winston.format.timestamp(timestampOption),
                         nestWinstonModuleUtilities.format.nestLike('Sample', {
                             prettyPrint: true,
                         }),
                     ),
+                }),
+                new (require('winston-daily-rotate-file'))({
+                    format: winston.format.combine(
+                        winston.format.timestamp(timestampOption),
+                        winston.format.printf(
+                            (log) =>
+                                `[${log.timestamp}] ${log.level}: ${log.message}`,
+                        ),
+                    ),
+                    filename: 'logs/%DATE%.log',
+                    datePattern: 'YYYY-MM-DD',
+                    zippedArchive: true,
+                    maxSize: '20m',
+                    maxFiles: '14d',
+                    json: true,
                 }),
             ],
         }),

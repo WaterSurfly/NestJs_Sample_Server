@@ -1,19 +1,19 @@
-import {Module} from '@nestjs/common';
-import {ConfigModule, ConfigService} from '@nestjs/config';
-import {validationSchema} from './config/validationSchema';
-import {TypeOrmModule} from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { validationSchema } from './config/validationSchema';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import authConfig from './config/authConfig';
-import {ExceptionModule} from './common/exception/exception.module';
-import {LoggingModule} from './common/interceptor/logging.module';
-import {BatchModule} from './common/batch/batch.module';
-import {TerminusModule} from '@nestjs/terminus';
-import {HttpModule} from '@nestjs/axios';
+import { ExceptionModule } from './common/exception/exception.module';
+import { LoggingModule } from './common/interceptor/logging.module';
+import { BatchModule } from './common/batch/batch.module';
+import { TerminusModule } from '@nestjs/terminus';
+import { HttpModule } from '@nestjs/axios';
 import globalConfig from './config/globalConfig';
-import {AccountModule} from './app/account/account.module';
-import {GraphQLModule} from '@nestjs/graphql';
-import {ApolloDriver, ApolloDriverConfig} from '@nestjs/apollo';
-import {join} from 'path';
-import {ChatModule} from './app/chat/chat.module';
+import { AccountModule } from './app/account/account.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { join } from 'path';
+import { ChatModule } from './app/chat/chat.module';
 
 const loadConfigs = [authConfig, globalConfig];
 
@@ -63,14 +63,14 @@ const loadConfigs = [authConfig, globalConfig];
                 path: join(process.cwd(), 'src/graphql.ts'),
             },
             playground: true,
-            context: ({req, connection}) => {
+            context: ({ req, connection }) => {
                 if (req) {
                     const user = req.headers.authorization;
-                    return {...req, user}
+                    return { ...req, user };
                 } else {
                     return connection;
                 }
-            }
+            },
         }),
         ExceptionModule,
         LoggingModule,
@@ -83,5 +83,4 @@ const loadConfigs = [authConfig, globalConfig];
     controllers: [],
     providers: [],
 })
-export class AppModule {
-}
+export class AppModule {}

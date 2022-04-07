@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, LoggerService } from '@nestjs/common';
 import { Interval, SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
@@ -6,13 +6,12 @@ import { CheckService } from '../../app/health-check/check.service';
 
 @Injectable()
 export class TaskService {
-    private readonly logger = new Logger(TaskService.name);
-
     constructor(
         private schedulerRegistry: SchedulerRegistry,
         private health: HealthCheckService,
         private http: HttpHealthIndicator,
         private checkService: CheckService,
+        @Inject(Logger) private readonly logger: LoggerService,
     ) {
         this.addCronJob();
     }
@@ -44,7 +43,7 @@ export class TaskService {
     @Interval('intervalTask', 5000)
     async handleInterval() {
         const healthCheckRS = await this.checkService.runHealthCheck();
-        this.logger.log(healthCheckRS);
+        this.logger.log(JSON.stringify(healthCheckRS));
 
         /*
         const healthCheckP = this.health.check([

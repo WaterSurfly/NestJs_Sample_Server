@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TaskService } from './task.service';
 import { BatchController } from './batch.controller';
@@ -14,6 +14,6 @@ import { CheckModule } from '../../app/health-check/check.module';
         CheckModule,
     ],
     controllers: [BatchController],
-    providers: [TaskService],
+    providers: [TaskService, Logger],
 })
 export class BatchModule {}
