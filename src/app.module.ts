@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { validationSchema } from './config/validationSchema';
-import authConfig from './config/authConfig';
+import authConfig from './config/auth-config';
 import { ExceptionModule } from './common/exception/exception.module';
 import { LoggingModule } from './common/interceptor/logging.module';
 import { BatchModule } from './common/batch/batch.module';
 import { TerminusModule } from '@nestjs/terminus';
 import { HttpModule } from '@nestjs/axios';
-import globalConfig from './config/globalConfig';
+import globalConfig from './config/global-config';
 import { AccountModule } from './app/account/account.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -30,7 +30,10 @@ const loadConfigs = [authConfig, globalConfig];
         DatabaseCoreModule,
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,
-            autoSchemaFile: join(process.cwd(), 'src/common/graphql/schema.graphql'), // true : 파일을 별로 만드는 것 같지는 않은데 playGround에 반영됨, 파일경로: 파일 생성됨
+            autoSchemaFile: join(
+                process.cwd(),
+                'src/common/graphql/schema.graphql',
+            ), // true : 파일을 별로 만드는 것 같지는 않은데 playGround에 반영됨, 파일경로: 파일 생성됨
             debug: true,
 
             //typePaths: ['./**/*.graphql'], // schema first case : 수동으로 만든 write.graphql 사용해서 처리

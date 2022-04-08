@@ -5,32 +5,27 @@ import { ConfigService } from '@nestjs/config';
 @Module({
     imports: [
         TypeOrmModule.forRootAsync({
-            useFactory: (config: ConfigService) =>
-                config.get('global.db.dbTest'),
+            useFactory: (config: ConfigService) => config.get('db.dbTest'),
             inject: [ConfigService],
         }),
         TypeOrmModule.forRootAsync({
             name: 'dbTest2',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbTest2'),
+            useFactory: (configs: ConfigService) => configs.get('db.dbTest2'),
             inject: [ConfigService],
         }),
         TypeOrmModule.forRootAsync({
             name: 'dbAuth',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbAuth'),
+            useFactory: (configs: ConfigService) => configs.get('db.dbAuth'),
             inject: [ConfigService],
         }),
         TypeOrmModule.forRootAsync({
             name: 'dbCommon',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbCommon'),
+            useFactory: (configs: ConfigService) => configs.get('db.dbCommon'),
             inject: [ConfigService],
         }),
         TypeOrmModule.forRootAsync({
             name: 'dbGame',
-            useFactory: (configs: ConfigService) =>
-                configs.get('global.db.dbGame'),
+            useFactory: (configs: ConfigService) => configs.get('db.dbGame'),
             inject: [ConfigService],
         }),
     ],

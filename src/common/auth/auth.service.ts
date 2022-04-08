@@ -1,6 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import authConfig from '../../config/authConfig';
+import authConfig from '../../config/auth-config';
 import { ConfigType } from '@nestjs/config';
 
 interface User {
@@ -12,7 +12,7 @@ interface User {
 interface User4Guest {
     id: string;
     accountId: string;
-    reqTime : string;
+    reqTime: string;
 }
 
 @Injectable()
@@ -65,22 +65,22 @@ export class AuthService {
             const payload = jwt.verify(jwtString, this.config.jwtSecret) as (
                 | jwt.JwtPayload
                 | string
-                ) &
+            ) &
                 User4Guest;
 
             const { id, accountId, reqTime } = payload;
 
-            if(!info) {
+            if (!info) {
                 throw new UnauthorizedException();
             }
 
-            if(info.accountId !== Number(accountId)) {
+            if (info.accountId !== Number(accountId)) {
                 throw new UnauthorizedException();
             }
 
             return {
                 id,
-                reqTime
+                reqTime,
             };
         } catch (e) {
             throw new UnauthorizedException();
