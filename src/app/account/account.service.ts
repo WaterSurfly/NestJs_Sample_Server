@@ -13,12 +13,12 @@ import {
 import { ResultType } from '../../common/base/base-result.type';
 import { AuthService } from '../../common/auth/auth.service';
 import { PlayerService } from '../player/player.service';
-import { RedisCacheService } from '../../common/cache/redis/redis-cache.service';
 import {
     dbAuthConnectionName,
     ExecDbTransactionUsingQueryRunner,
     ExecDbTransaction,
 } from '../../database';
+import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class AccountService {
@@ -26,27 +26,27 @@ export class AccountService {
 
     constructor(
         @InjectConnection(dbAuthConnectionName)
-        private authConn: Connection,
-        private authService: AuthService,
-        private playerService: PlayerService,
+        private readonly authConn: Connection,
+        private readonly authService: AuthService,
+        private readonly playerService: PlayerService,
         @Inject(Logger) private readonly logger: LoggerService,
-        private redisCacheService: RedisCacheService,
+        @InjectRedis(dbAuthConnectionName) private readonly redis: Redis,
     ) {
         this.accountRepository =
             this.authConn.getCustomRepository(AccountRepository);
     }
 
     async hello(): Promise<string> {
-        const setRs = await this.redisCacheService.set('aa', 12345);
+        const setRs = await this.redis.set('aa', '12345');
         this.logger.warn(`setRs: ${setRs}`);
 
-        const getRs = await this.redisCacheService.get('aa');
+        const getRs = await this.redis.get('aa');
         this.logger.warn(`getRs: ${getRs}`);
 
-        const hsetRs = await this.redisCacheService.hset('bb', 'a', 11231);
+        const hsetRs = await this.redis.hset('bb', { a: 11231 });
         this.logger.warn(`hsetRs: ${hsetRs}`);
 
-        const hgetallRs = await this.redisCacheService.hgetall('bb');
+        const hgetallRs = await this.redis.hgetall('bb');
         this.logger.warn(`hgetallRs: ${JSON.stringify(hgetallRs)}`);
 
         return 'GET Account!!! Hello';
@@ -56,141 +56,135 @@ export class AccountService {
         return 'GET Account!!! Hello2';
     }
 
-    async auth(id: string): Promise<any> {
-        let rs;
+    async auth(id: string): Promise<AuthOutput> {
+        const output = new AuthOutput();
 
-        const isExist = await this.checkAccountExist(id);
-        if (isExist) {
-            // 계정 존재
-            rs = await this.getAccountInfo(id);
-        } else {
+        let account = await this.getAccountByLoginId(id);
+        if (!account) {    
             // 계정 생성
             const accountInput = new AccountInputDto();
             accountInput.loginId = id;
-            rs = await this.createAccount(accountInput);
-            if (rs.resultType === ResultType.Fail) {
-                return rs;
+            const createRs = await this.createAccount(accountInput);
+            if (!createRs) {
+                output.resultType = ResultType.Fail;
+                return output;
             }
-            this.logger.log(
-                `#AccountService #Msg=Create Account!!! : ${JSON.stringify(
-                    rs,
-                )}`,
-            );
+            this.logger.log(`#AccountService #Msg=Create Account!!!`);
+            account = await this.getAccountByLoginId(id);
         }
 
         const reqTime = TimeHelper.getUtcTime();
-        const authRs = new AuthOutput();
-        authRs.resultType = rs.resultType;
-        authRs.info = rs.info;
-        const accountId = rs.info.accountId;
-        authRs.token = this.authService.generateToken({
+        const accountId = account.accountId;
+        output.resultType = ResultType.Success;
+        output.info = account;
+        output.token = this.authService.generateToken({
             id,
             accountId,
             reqTime,
         });
 
-        return authRs;
+        return output;
     }
 
-    async login(accountId: number): Promise<any> {
-        const isAccountExist = await this.checkAccountExist(accountId);
-        if (!isAccountExist) {
-            const rs = new GetAccountInfoOutput();
-            rs.resultType = ResultType.Fail;
-            return rs;
+    async getAccountByLoginId(loginId: string): Promise<AccountEntity | undefined> {
+        return await this.getAccountInfoFromDb({ loginId }); 
+    }
+
+    async getAccountByAccountId(accountId: number): Promise<AccountEntity | undefined> {
+        const cacheKey = `account:${accountId}`;
+        return await this.getAccountInfoFromCache(cacheKey, { accountId });
+    }
+
+    async getAccountInfoFromDb(condition: object) {
+        return await this.accountRepository.findOne(condition);
+    }
+
+    async getAccountInfoFromCache(cacheKey: string, condition: object) {
+        let data;
+        const cached = await this.redis.hgetall(cacheKey);
+        if(!cached || Object.keys(cached).length == 0) {
+            const dataFromDb = await this.getAccountInfoFromDb(condition);
+            if(dataFromDb) {
+                await this.redis.hmset(cacheKey, dataFromDb);
+                data = dataFromDb;
+            }
+        } else {
+            data = cached;
         }
 
-        await this.updateLastLoginTime(accountId);
+        await this.registerExpireAccount(data.accountId, cacheKey);
+        return data;
+    }
+
+    async login(accountId: number): Promise<GetAccountInfoOutput> {
+        const output = new GetAccountInfoOutput();
+        const account = await this.getAccountByAccountId(accountId);
+        if (!account) {
+            output.resultType = ResultType.Fail;
+            return output;
+        }
+
+        await this.updateLastLoginTime(account);
         await this.playerService.createPlayer(accountId);
-        return await this.getAccountInfo(accountId);
+
+        output.resultType = ResultType.Success;
+        output.info = await this.getAccountByAccountId(accountId);
+        return output;
     }
 
-    async createAccount(account: AccountInputDto) {
-        try {
-            const isExist = await this.checkAccountExist(account.loginId);
-            if (isExist) {
-                throw new Error('Account exist!!!');
-            }
+    async createAccount(account: AccountInputDto): Promise<boolean> {
+        const accounts = [];
+        const now = TimeHelper.getUtcDate();
+        const accountEntity = this.accountRepository.create();
+        accountEntity.loginId = account.loginId;
+        accountEntity.createdTime = now;
+        accountEntity.lastLoginTime = now;
+        accounts.push(accountEntity);
 
-            const accounts = [];
-            const now = TimeHelper.getUtcDate();
-            const accountEntity = new AccountEntity();
-            accountEntity.loginId = account.loginId;
-            accountEntity.createdTime = now;
-            accountEntity.lastLoginTime = now;
-            accounts.push(accountEntity);
+        // 계정생성 case 1.
+        //const rs = await ExecDbTransactionUsingQueryRunner(
+        //    this.authConn,
+        //    accounts,
+        //);
 
-            // 계정생성 case 1.
-            //const rs = await ExecDbTransactionUsingQueryRunner(
-            //    this.authConn,
-            //    accounts,
-            //);
+        // 계정생성 case 2.
+        return await ExecDbTransaction(
+            this.accountRepository,
+            accounts,
+        );
+    }
 
-            // 계정생성 case 2.
-            const rs = await ExecDbTransaction(
-                this.accountRepository,
-                accounts,
-            );
+    private async updateLastLoginTime(account: AccountEntity) {
+        const where = {
+            accountId : account.accountId
+        };
 
-            if (!rs) {
-                throw new Error('Account create fail DB!!!');
-            }
+        const updateObj = Object.assign({}, account);
+        const now = TimeHelper.getUtcDate();
+        const nowStr = TimeHelper.getUtcTimeTransformFrom(now);
 
-            return await this.getAccountInfo(account.loginId);
-        } catch (e) {
-            this.logger.error(e);
-
-            const rs = new GetAccountInfoOutput();
-            rs.resultType = ResultType.Fail;
-            return rs;
+        updateObj.lastLoginTime = now;
+        const updateRs = await this.accountRepository.update(where, updateObj);
+        if(updateRs) {
+            const cacheKey = `account:${account.accountId}`;
+            this.redis.hset(cacheKey, { lastLoginTime : nowStr });
+            await this.registerExpireAccount(account.accountId, cacheKey);
         }
     }
 
-    async checkAccountExist(value: any) {
-        let condition;
-        const type = typeof value;
-        if (type === 'number') {
-            condition = { accountId: value };
-        } else {
-            condition = { loginId: value };
-        }
-        const account = await this.accountRepository.findOne(condition);
-        return !!account;
-    }
-
-    async getAccountInfo(value: any) {
-        let condition;
-        const type = typeof value;
-        if (type === 'number') {
-            condition = { accountId: value };
-        } else {
-            condition = { loginId: value };
-        }
-        const account = await this.accountRepository.findOne(condition);
-
-        const rs = new GetAccountInfoOutput();
-        rs.resultType = ResultType.Success;
-        rs.info = account;
-
-        return rs;
-    }
-
-    private async updateLastLoginTime(accountId) {
-        const account = await this.accountRepository.findOne({
-            accountId,
-        });
-
-        account.lastLoginTime = TimeHelper.getUtcDate();
-        await this.accountRepository.save(account);
+    async registerExpireAccount(accountId: number, value: string): Promise<void> {
+        const now = TimeHelper.getUtcDate();
+        const expireKey = `expireAccount`;
+        this.redis.zadd(expireKey, now.valueOf(), value);
     }
 
     async getAllAccountInfo() {
+        const output = new GetAllAccountInfosOutput();
         const accounts = await this.accountRepository.find();
 
-        const rs = new GetAllAccountInfosOutput();
-        rs.resultType = ResultType.Success;
-        rs.infos = accounts;
+        output.resultType = ResultType.Success;
+        output.infos = accounts;
 
-        return rs;
+        return output;
     }
 }

@@ -3,6 +3,9 @@ import { Interval, SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
 import { CheckService } from '../../app/health-check/check.service';
+import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
+import { dbAuthConnectionName } from 'src/database';
+import { TimeHelper } from 'src/utils';
 
 @Injectable()
 export class TaskService {
@@ -12,6 +15,7 @@ export class TaskService {
         private http: HttpHealthIndicator,
         private checkService: CheckService,
         @Inject(Logger) private readonly logger: LoggerService,
+        @InjectRedis(dbAuthConnectionName) private readonly redis: Redis,
     ) {
         this.addCronJob();
     }
@@ -40,7 +44,7 @@ export class TaskService {
     }
     */
 
-    @Interval('intervalTask', 5000)
+    @Interval('HealthCheck', 5000)
     async handleInterval() {
         const healthCheckRS = await this.checkService.runHealthCheck();
         this.logger.log(JSON.stringify(healthCheckRS));
@@ -60,5 +64,25 @@ export class TaskService {
 
         this.logger.log('Task Called by Timeout');
          */
+    }
+
+    @Interval('ExpireAccount', 3000)
+    async execExpireAccount() {
+        
+        const redisKey = `expireAccount`;
+        const now = TimeHelper.getUtcDate();
+        const addTime = TimeHelper.addTime(now, -30, 'second');
+        const timeStamp = addTime.valueOf();
+        const expireKeys = await this.redis.zrangebyscore(redisKey, '-inf', timeStamp);
+        
+        this.logger.log(`execExpireAccount : ${JSON.stringify(expireKeys)}`);
+
+        for (const expireKey of expireKeys) {
+            await this.redis.del(expireKey);
+        }
+
+        if(expireKeys.length > 0) {
+            await this.redis.zremrangebyscore(redisKey, '-inf', timeStamp);
+        }
     }
 }

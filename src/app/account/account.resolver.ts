@@ -41,7 +41,7 @@ export class AccountResolver {
     async getAccountInfo(
         @Args('accountId', { type: () => Number }) accountId: number,
     ) {
-        return this.accountService.getAccountInfo(accountId);
+        //return this.accountService.getAccountInfo(accountId);
     }
 
     @Query(() => GetAllAccountInfosOutput)

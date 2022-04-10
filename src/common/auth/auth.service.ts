@@ -11,7 +11,7 @@ interface User {
 
 interface User4Guest {
     id: string;
-    accountId: string;
+    accountId: number;
     reqTime: string;
 }
 

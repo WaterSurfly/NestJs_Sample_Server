@@ -2,10 +2,11 @@ import { Transform } from 'class-transformer';
 import { IsString, IsNumber } from 'class-validator';
 import { BaseResultType } from '../../../common/base/base-result.type';
 import { ObjectType, Field } from '@nestjs/graphql';
+import { Account } from 'src/common/interfaces';
 
 // BaseInfoDto
 @ObjectType()
-export class AccountInfoDto {
+export class AccountInfoDto implements Account {
     @Transform((params) => params.value.trim())
     @Field(() => String)
     @IsNumber()

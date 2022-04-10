@@ -1,0 +1,55 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AccountInfoDto {
+  accountId: String!
+  loginId: String!
+  createdTime: String!
+  lastLoginTime: String!
+}
+
+type AuthOutput {
+  resultType: String!
+  info: AccountInfoDto!
+  token: String!
+}
+
+type GetAccountInfoOutput {
+  resultType: String!
+  info: AccountInfoDto!
+}
+
+type GetAllAccountInfosOutput {
+  resultType: String!
+  infos: AccountInfoDto!
+}
+
+type PlayerInfoDto {
+  accountId: Float!
+  nick: String!
+  createdTime: String!
+}
+
+type GetPlayerInfoOutput {
+  resultType: String!
+  info: PlayerInfoDto!
+}
+
+type Query {
+  hello: String!
+  hello2: String!
+  auth(id: String!): AuthOutput!
+  login(accountId: Float!): GetAccountInfoOutput!
+  getAccountInfo(accountId: Float!): GetAccountInfoOutput!
+  getAllAccountInfo: GetAllAccountInfosOutput!
+  getPlayerInfo(accountId: Float!): GetPlayerInfoOutput!
+}
+
+type Mutation {
+  createAccount(createAccountInput: AccountInputDto!): GetAccountInfoOutput!
+}
+
+input AccountInputDto {
+  loginId: String!
+}

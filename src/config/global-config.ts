@@ -88,6 +88,7 @@ export default registerAs('db', () => ({
             ],
             selector: process.env.DATABASE_SELECTOR,
         },
+        logging: true,
         autoLoadEntities: true,
         synchronize: false,
         entities: [

@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { AuthService } from './common/auth/auth.service';
 import {GqlContextType, GqlExecutionContext} from "@nestjs/graphql";
@@ -27,7 +27,11 @@ export class AuthGuard implements CanActivate {
     }
 
     private validateRequest(request: Request, info?: any) {
-        const jwtString = request.headers.authorization.split('Bearer ')[1];
+        const auth = request.headers.authorization;
+        if(!auth) {
+            throw new UnauthorizedException();
+        }
+        const jwtString = auth.split('Bearer ')[1];
         this.authService.verifyToken(jwtString, info);
         return true;
     }

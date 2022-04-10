@@ -4,10 +4,9 @@ import { AccountService } from './account.service';
 import { AccountResolver } from './account.resolver';
 import { AuthModule } from '../../common/auth/auth.module';
 import { PlayerModule } from '../player/player.module';
-import { RedisCacheModule } from '../../common/cache/redis/redis-cache.module';
 
 @Module({
-    imports: [AuthModule, DbAuthModule, PlayerModule, RedisCacheModule],
+    imports: [AuthModule, DbAuthModule, PlayerModule],
     controllers: [],
     providers: [AccountService, Logger, AccountResolver],
 })

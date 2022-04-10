@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs, { UnitTypeLong } from 'dayjs';
 import utc from 'dayjs/plugin/utc'
 import { ValueTransformer } from 'typeorm';
 
@@ -20,14 +20,18 @@ export class TimeHelper {
         return dayjs().format(format ? format : this.dateTemplate);
     }
 
-    static getUtcTimeTransformTo(time) {
+    static getUtcTimeTransformTo(time: string) {
         dayjs.extend(utc);
         return dayjs(time).utc().toDate();
     }
 
-    static getUtcTimeTransformFrom(time) {
+    static getUtcTimeTransformFrom(time: Date) {
         dayjs.extend(utc);
         return dayjs(time).format(this.dateTemplate);
+    }
+
+    static addTime(time: Date, addValue: number, unit: UnitTypeLong) {
+        return dayjs(time).add(addValue, unit);
     }
 }
 
