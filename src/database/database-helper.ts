@@ -5,6 +5,7 @@ import { Connection } from 'typeorm/connection/Connection';
 async function ExecDbTransactionUsingQueryRunner<T>(
     conn: Connection,
     entities: T[],
+    logger,
 ): Promise<boolean> {
     const queryRunner = conn.createQueryRunner();
     await queryRunner.connect();
@@ -18,6 +19,7 @@ async function ExecDbTransactionUsingQueryRunner<T>(
         await queryRunner.commitTransaction();
         return true;
     } catch (e) {
+        logger.error(e);
         await queryRunner.rollbackTransaction();
         return false;
     } finally {

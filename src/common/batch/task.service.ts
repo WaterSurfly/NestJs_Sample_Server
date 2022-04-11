@@ -68,20 +68,23 @@ export class TaskService {
 
     @Interval('ExpireAccount', 3000)
     async execExpireAccount() {
-        
-        const redisKey = `expireAccount`;
+        const redisKey = `Online`;
         const now = TimeHelper.getUtcDate();
         const addTime = TimeHelper.addTime(now, -30, 'second');
         const timeStamp = addTime.valueOf();
-        const expireKeys = await this.redis.zrangebyscore(redisKey, '-inf', timeStamp);
-        
+        const expireKeys = await this.redis.zrangebyscore(
+            redisKey,
+            '-inf',
+            timeStamp,
+        );
+
         this.logger.log(`execExpireAccount : ${JSON.stringify(expireKeys)}`);
 
         for (const expireKey of expireKeys) {
             await this.redis.del(expireKey);
         }
 
-        if(expireKeys.length > 0) {
+        if (expireKeys.length > 0) {
             await this.redis.zremrangebyscore(redisKey, '-inf', timeStamp);
         }
     }

@@ -1,36 +1,35 @@
-import { Inject, Injectable, Logger, LoggerService } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
-import { AccountRepository } from '../../database/dbAuth/repository/account.repository';
-import { AccountEntity } from 'src/database/dbAuth/entity/account.entity';
-import { AccountInputDto } from './input/account-input.dto';
-import { TimeHelper } from '../../utils';
+import {Inject, Injectable, Logger, LoggerService} from '@nestjs/common';
+import {InjectConnection} from '@nestjs/typeorm';
+import {Connection} from 'typeorm';
+import {AccountRepository} from '../../database/dbAuth/repository/account.repository';
+import {AccountEntity} from 'src/database/dbAuth/entity/account.entity';
+import {AccountInputDto} from './input/account-input.dto';
+import {TimeHelper} from '../../utils';
 import {
     AuthOutput,
     GetAccountInfoOutput,
     GetAllAccountInfosOutput,
 } from './output/account-output.dto';
-import { ResultType } from '../../common/base/base-result.type';
-import { AuthService } from '../../common/auth/auth.service';
-import { PlayerService } from '../player/player.service';
-import {
-    dbAuthConnectionName,
-    ExecDbTransactionUsingQueryRunner,
-    ExecDbTransaction,
-} from '../../database';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
+import {ResultType} from '../../common/base/base-result.type';
+import {AuthService} from '../../common/auth/auth.service';
+import {PlayerService} from '../player/player.service';
+import {InjectRedis, Redis} from '@nestjs-modules/ioredis';
+import * as dbHelper from '../../database';
+import * as redisHelper from '../../common/redis';
 
 @Injectable()
 export class AccountService {
     private readonly accountRepository: AccountRepository;
 
     constructor(
-        @InjectConnection(dbAuthConnectionName)
+        @InjectConnection(dbHelper.dbAuthConnectionName)
         private readonly authConn: Connection,
         private readonly authService: AuthService,
         private readonly playerService: PlayerService,
-        @Inject(Logger) private readonly logger: LoggerService,
-        @InjectRedis(dbAuthConnectionName) private readonly redis: Redis,
+        @Inject(Logger)
+        private readonly logger: LoggerService,
+        @InjectRedis(dbHelper.dbAuthConnectionName)
+        private readonly redis: Redis,
     ) {
         this.accountRepository =
             this.authConn.getCustomRepository(AccountRepository);
@@ -43,7 +42,7 @@ export class AccountService {
         const getRs = await this.redis.get('aa');
         this.logger.warn(`getRs: ${getRs}`);
 
-        const hsetRs = await this.redis.hset('bb', { a: 11231 });
+        const hsetRs = await this.redis.hset('bb', {a: 11231});
         this.logger.warn(`hsetRs: ${hsetRs}`);
 
         const hgetallRs = await this.redis.hgetall('bb');
@@ -60,7 +59,7 @@ export class AccountService {
         const output = new AuthOutput();
 
         let account = await this.getAccountByLoginId(id);
-        if (!account) {    
+        if (!account) {
             // 계정 생성
             const accountInput = new AccountInputDto();
             accountInput.loginId = id;
@@ -86,25 +85,33 @@ export class AccountService {
         return output;
     }
 
-    async getAccountByLoginId(loginId: string): Promise<AccountEntity | undefined> {
-        return await this.getAccountInfoFromDb({ loginId }); 
+    async getAccountByLoginId(
+        loginId: string,
+    ): Promise<AccountEntity | undefined> {
+        return await this.getAccountInfoFromDb({loginId});
     }
 
-    async getAccountByAccountId(accountId: number): Promise<AccountEntity | undefined> {
-        const cacheKey = `account:${accountId}`;
-        return await this.getAccountInfoFromCache(cacheKey, { accountId });
+    async getAccountByAccountId(
+        accountId: number,
+    ): Promise<AccountEntity | undefined> {
+        const cacheKey = this.getAccountCacheKey(accountId);
+        return await this.getAccountInfoFromCache(cacheKey, {accountId});
     }
 
     async getAccountInfoFromDb(condition: object) {
         return await this.accountRepository.findOne(condition);
     }
 
+    getAccountCacheKey(accountId: number) {
+        return `${redisHelper.accountPrefix}:${accountId}`;
+    }
+
     async getAccountInfoFromCache(cacheKey: string, condition: object) {
         let data;
         const cached = await this.redis.hgetall(cacheKey);
-        if(!cached || Object.keys(cached).length == 0) {
+        if (!cached || Object.keys(cached).length == 0) {
             const dataFromDb = await this.getAccountInfoFromDb(condition);
-            if(dataFromDb) {
+            if (dataFromDb) {
                 await this.redis.hmset(cacheKey, dataFromDb);
                 data = dataFromDb;
             }
@@ -112,7 +119,7 @@ export class AccountService {
             data = cached;
         }
 
-        await this.registerExpireAccount(data.accountId, cacheKey);
+        await this.updateOnlineTouch(data.accountId, cacheKey);
         return data;
     }
 
@@ -142,21 +149,22 @@ export class AccountService {
         accounts.push(accountEntity);
 
         // 계정생성 case 1.
-        //const rs = await ExecDbTransactionUsingQueryRunner(
-        //    this.authConn,
-        //    accounts,
-        //);
+        return await dbHelper.ExecDbTransactionUsingQueryRunner(
+            this.authConn,
+            accounts,
+            this.logger,
+        );
 
         // 계정생성 case 2.
-        return await ExecDbTransaction(
-            this.accountRepository,
-            accounts,
-        );
+        //return await dbHelper.ExecDbTransaction(
+        //    this.accountRepository,
+        //    accounts,
+        //);
     }
 
     private async updateLastLoginTime(account: AccountEntity) {
         const where = {
-            accountId : account.accountId
+            accountId: account.accountId,
         };
 
         const updateObj = Object.assign({}, account);
@@ -165,17 +173,17 @@ export class AccountService {
 
         updateObj.lastLoginTime = now;
         const updateRs = await this.accountRepository.update(where, updateObj);
-        if(updateRs) {
-            const cacheKey = `account:${account.accountId}`;
-            this.redis.hset(cacheKey, { lastLoginTime : nowStr });
-            await this.registerExpireAccount(account.accountId, cacheKey);
+        if (updateRs) {
+            const cacheKey = this.getAccountCacheKey(account.accountId);
+            this.redis.hset(cacheKey, {lastLoginTime: nowStr});
+            await this.updateOnlineTouch(account.accountId, cacheKey);
         }
     }
 
-    async registerExpireAccount(accountId: number, value: string): Promise<void> {
+    async updateOnlineTouch(accountId: number, value: string): Promise<void> {
         const now = TimeHelper.getUtcDate();
-        const expireKey = `expireAccount`;
-        this.redis.zadd(expireKey, now.valueOf(), value);
+        const key = redisHelper.onlineKey;
+        this.redis.zadd(key, now.valueOf(), value);
     }
 
     async getAllAccountInfo() {

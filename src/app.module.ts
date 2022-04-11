@@ -7,7 +7,7 @@ import { LoggingModule } from './common/interceptor/logging.module';
 import { BatchModule } from './common/batch/batch.module';
 import { TerminusModule } from '@nestjs/terminus';
 import { HttpModule } from '@nestjs/axios';
-import globalConfig from './config/global-config';
+import dbConfig from './config/db-config';
 import { AccountModule } from './app/account/account.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -15,7 +15,7 @@ import { join } from 'path';
 import { ChatModule } from './app/chat/chat.module';
 import { DatabaseCoreModule } from './database/database-core.module';
 
-const loadConfigs = [authConfig, globalConfig];
+const loadConfigs = [authConfig, dbConfig];
 
 @Module({
     imports: [
